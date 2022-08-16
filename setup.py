@@ -16,7 +16,7 @@ setup(name='lv17analysis',
       author='Anatoli Ulmer',
       author_email='anatoli.ulmer@gmail.com',
       description='Python package for data analysis of tmolv1720 experiment (2022).',
-      url='https://github.com/skuschel/tmolv1720',
+      url='https://github.com/anatoli-ulmer/lv17analysis',
       install_requires=['matplotlib>=1.3',
                         # ndarray.tobytes was introduced in np 1.9
                         'numpy>=1.9', 'numpy>=1.9',
