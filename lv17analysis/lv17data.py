@@ -154,6 +154,9 @@ run_type_array = np.array([
     "data", "", "data", "data", "", "void", "other"])
 
 
+epix_run_types = ["skimmer open", "skimmer closed", "att beam", "fullbeam"]
+
+
 def photon_energy(run):
     '''
     Returns calibrated energy for a given run number in electron volts (eV).
@@ -193,4 +196,30 @@ def run_type(run):
     Anatoli Ulmer, 2022
     '''
     return run_type_array[run-1]
+
+
+def cs_sample(run):
+    if run <= 497:
+        return "Ne"
+    else:
+        return "Xe"
+
+
+def is_epix_run(run):
+    if np.ndim(run) == 0:
+        return run_type(run) in epix_run_types
+    else:
+        return [run_type(item) in epix_run_types for item in run]
+
+
+def epix_runs():
+    return [item in epix_run_types for item in run_type_array]
+
+
+def dark_runs():
+    return [item == "dark" for item in run_type_array]
+
+
+def spec_runs():
+    return [item == "spectrometer" for item in run_type_array]
 
