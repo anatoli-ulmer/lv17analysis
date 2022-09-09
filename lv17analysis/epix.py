@@ -15,10 +15,10 @@ def count_lit(img, lit_thresh=0.5):
     return np.nansum(img.flatten() > lit_thresh)
 
 
-def get_mask(img):   
+def get_mask(img):
     mask = np.ones(img.shape, dtype=bool)
-    mask[:, 352:357] = False
-    mask[384:389, :] = False
+    mask[:, 352:356] = False
+    mask[384:388, :] = False
     mask[196:442, 610:] = False
     mask[1*96-1, :] = False
     mask[2*96-1, :] = False
@@ -30,24 +30,44 @@ def get_mask(img):
     return mask
 
 
-def masked_img(img):
-    _mask = get_mask(img)
-    ret = np.array(img, dtype=np.float64)
-    ret[~_mask] = np.nan
+def masked_img(img, mask=None):
+    if mask is None:
+        mask = get_mask(img)
+    # ret = np.array(img, dtype=np.float64)
+    # ret[~mask] = np.nan
+    ret = np.ma.array(img, mask=~mask, dtype=np.float64)
 
     return ret
 
 
-def cm_correction(img, axis=0, cm_thresh=0.8):
+def offset_correction(img, offs_thresh=0.5, x_chunks=2, y_chunks=8):
+    ny, nx = img.shape
+    nx_chunk = (nx-5)/x_chunks
+    ny_chunk = (ny-5)/y_chunks
+
+    for ix in range(x_chunks):
+        for iy in range(y_chunks):
+            img_tile = img[int(iy*ny_chunk):int((iy+1)*ny_chunk-1),
+                           int(ix*nx_chunk):int((ix+1)*nx_chunk-1)]
+            img_tile = img_tile - np.nanmedian(img_tile[img_tile < offs_thresh])
+
+    return img
+
+
+def cm_correction(img, axis=None, cm_thresh=0.8):
     nrows, ncols = img.shape
     ny, nx = np.int16(nrows/2), np.int16(ncols/2)
 
     img_cm = np.copy(img)
     img_cm[img_cm > cm_thresh] = np.nan
-    if axis == 0:
+
+    if axis is None:
+        img = cm_correction(img, axis=0, cm_thresh=cm_thresh)
+        img = cm_correction(img, axis=1, cm_thresh=cm_thresh)
+    elif axis == 0:
         img[:, :(nx-1)] -= np.nanmedian(img_cm[:, :(nx-1)], axis=1).reshape(nrows, 1)
         img[:, -(nx-1):] -= np.nanmedian(img_cm[:, -(nx-1):], axis=1).reshape(nrows, 1)
-    else:
+    elif axis == 1:
         img[:(ny-1), :] -= np.nanmedian(img_cm[:(ny-1), :], axis=0).reshape(1, ncols)
         img[-(ny-1):, :] -= np.nanmedian(img_cm[-(ny-1):, :], axis=0).reshape(1, ncols)
 
