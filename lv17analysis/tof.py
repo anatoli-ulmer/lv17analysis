@@ -9,6 +9,45 @@ import math
 from pylab import polyfit, plot, show
 
 
+def get_trace(hsd, evt, tof_channel=None, ranges_bg=[0, 10000], n_digitizers_per_channel=4):
+    '''
+    Parameters:
+        hsd : ds_run.Detector('hsd') object
+            psana Detector object
+        evt : element of ds_run.events()
+            psana evt object
+        tof_channel : int, optional
+            ADC channel
+        ranges_bg : 2 element array, optional
+            element range for offset subtraction
+        n_digitizers_per_channel : int, optional
+             Number of digitizers per tof_channel. Relevant for subtracting offset
+             from each of the digitizers independently. Is typically a power of 2.
+    Returns:
+        tof_trace : array
+            ToF trace with subtracted offset.
+        tof_times : array
+            ToF times
+
+    Anatoli Ulmer, 2022
+    '''
+    hsd_data = hsd.raw.waveforms(evt)
+
+    if tof_channel is None:
+        # If no channel is specified and only one hsd channel is active, it will be chosen.
+        # If multiple channels are active, the default channel 3 will be chosen.
+        if len(hsd_data.keys()) == 1:
+            tof_channel = list(hsd_data.keys())[0]  # the digitzer channel the tof is on
+        else:
+            tof_channel = 3  # the default is channel 3
+    
+    tof_data = hsd_data[tof_channel]
+    tof_times = tof_data['times']  # the times
+    tof_trace = np.asarray(tof_data[0], dtype=float)  # the actual tof data
+    tof_trace = bg_correction(tof_trace, ranges_bg=ranges_bg, nchannels=n_digitizers_per_channel)
+    return tof_trace, tof_times
+
+
 def bg_correction(trace, ranges_bg=[0, 10000], nchannels=4):
     for i in np.arange(nchannels):
         bg = np.mean(trace[i+ranges_bg[0]:ranges_bg[1]:nchannels])
