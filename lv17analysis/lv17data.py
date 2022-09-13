@@ -166,6 +166,15 @@ def photon_energy(run):
     return energy_elog_ev[run-1]
 
 
+def photon_energy_ev(run):
+    '''
+    Returns calibrated energy for a given run number in electron volts (eV).
+
+    Anatoli Ulmer, 2022
+    '''
+    return photon_energy(run)
+
+
 def photon_energy_kev(run):
     '''
     Returns calibrated energy for a given run number in kilo electron volts (keV).
@@ -198,14 +207,25 @@ def run_type(run):
     return run_type_array[run-1]
 
 
-def cs_sample(run):
+def cluster_sample(run):
+    '''
+    Returns cluster material for a given run number.
+
+    Anatoli Ulmer, 2022
+    '''
     if run <= 497:
-        return "Ne"
+        cs_sample = "Ne"
     else:
-        return "Xe"
+        cs_sample = "Xe"
+    return cs_sample
 
 
 def is_epix_run(run):
+    '''
+    Returns a bool value for a given run number or a bool array for a run array.
+
+    Anatoli Ulmer, 2022
+    '''
     if np.ndim(run) == 0:
         return run_type(run) in epix_run_types
     else:
@@ -213,13 +233,28 @@ def is_epix_run(run):
 
 
 def epix_runs():
+    '''
+    Returns all runs with epix100 detector data.
+
+    Anatoli Ulmer, 2022
+    '''
     return [item in epix_run_types for item in run_type_array]
 
 
 def dark_runs():
+    '''
+    Returns all epix100 detector dark runs.
+
+    Anatoli Ulmer, 2022
+    '''
     return [item == "dark" for item in run_type_array]
 
 
 def spec_runs():
+    '''
+    Returns spectrometer runs.
+
+    Anatoli Ulmer, 2022
+    '''
     return [item == "spectrometer" for item in run_type_array]
 
