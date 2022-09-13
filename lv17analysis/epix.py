@@ -129,3 +129,46 @@ def calc_sum_lit(exp='tmolv1720', run=[170], lit_thresh=0.5,
     _pkl_save(os.path.join(save_dir, 'r{:04d}_sums.pkl'.format(ds_run.runnum)))
     _pkl_save(os.path.join(save_dir, 'r{:04d}_lit.pkl'.format(ds_run.runnum)))
     return delay, img_sum, img_lit
+
+
+def read_quantum_efficiency_csv(filename="None300um_smoothed.csv"):
+    '''
+    Choose between the following filter files:
+        'None300um.csv'
+        'None300um_smoothed.csv' (default)
+        'Al25um.csv'
+        'Al25um_smoothed.csv'
+        'Be25um.csv'
+        'Be25um_smoothed.csv'
+        'Kapton30um.csv'
+        'Kapton30um_smoothed.csv'
+
+    Returns:
+        ev - photon energy in electronvolts
+        qe - quantum efficiency for given filter
+
+    Anatoli Ulmer, 2022
+    '''
+    # abs_filepath = os.path.dirname(__file__) + rel_filepath
+    # dir_list = os.listdir(abs_filepath)
+    # print(dir_list)
+
+    rel_filepath = "../calibration_data/epix100/quantum_efficiency/"
+    abs_filepath = os.path.join(os.path.dirname(__file__), rel_filepath, filename)
+
+    data = np.loadtxt(abs_filepath, delimiter=',')
+    ev = data[:, 0]
+    qe = data[:, 1] / 5e-5
+
+    return ev, qe
+
+
+def quantum_efficiency(photon_energy_ev, filename="None300um_smoothed.csv"):
+    '''
+    Anatoli Ulmer, 2022
+    '''
+    ev, qe = read_quantum_efficiency_csv(filename=filename)
+    quantum_efficiency = np.interp(photon_energy_ev, ev, qe)
+    
+    return quantum_efficiency
+
