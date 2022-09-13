@@ -5,6 +5,36 @@ import os
 from lv17analysis.helpers import *
 
 
+def get_img(det, evt, img_selector='image'):
+    '''
+    Parameters:
+        det : ds_run.Detector('epix100') object
+            psana Detector object
+        evt : element of ds_run.events()
+            psana evt object
+        img_selector : 'raw', 'calib' or 'image' (default)
+            Choose which image to ask from the psana detector calibration function.
+            Choosing 'image' is recommended.
+    Returns:
+        img : 2D array
+            epix100 detector image
+
+    Anatoli Ulmer, 2022
+    '''
+    if img_selector == 'image':
+        img_epix = det.raw.image(evt)
+    elif img_selector == 'calib': 
+        img_raw = det.raw.calib(evt)
+        img_epix = img_raw[0].transpose()
+    elif img_selector == 'raw':
+        img_raw = det.raw.raw(evt)
+        img_epix = np.asarray(img_raw[0], dtype=np.float64).transpose()
+    else:
+        raise Exception("img_selector has to be one of the following options:\
+                        'raw', 'calib' or 'image' (default)")
+    return img_epix
+
+
 def nan_cross(img):
     img[:, 352:357] = np.nan
     img[384:389, :] = np.nan
@@ -54,7 +84,7 @@ def offset_correction(img, offs_thresh=0.5, x_chunks=2, y_chunks=8):
     return img
 
 
-def cm_correction(img, axis=None, cm_thresh=0.8):
+def cm_correction(img, axis=None, cm_thresh=0.5):
     nrows, ncols = img.shape
     ny, nx = np.int16(nrows/2), np.int16(ncols/2)
 
