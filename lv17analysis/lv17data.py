@@ -2,6 +2,63 @@
 import numpy as np
 
 
+exp = 'tmolv1720'
+path = '/reg/d/psdm/tmo/tmolv1720/'
+h5path = '/reg/data/ana01/tmo/tmolv1720/hdf5/smalldata'
+cmap = 'magma'
+
+
+xleap_runs = [
+    180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196,
+    197, 198, 199, 200, 216, 217, 218, 219, 220, 221, 222, 223, 225, 226, 227, 228, 229,
+    230, 231, 232, 233, 234, 235, 238, 239, 240, 241, 242, 246, 247, 248, 249, 250, 254,
+    255, 256, 257, 258, 261, 262, 263, 264, 265, 268, 269, 270, 271, 272, 273, 276, 277,
+    278, 279, 280, 281, 282, 287, 288, 290, 291, 292, 293, 296, 299, 300, 301, 302, 303,
+    304, 305, 306, 307, 308, 309, 310, 311, 312]
+
+
+sase_runs = [
+    376, 377, 378, 379, 380, 381, 383, 384, 385, 386, 387, 388, 389, 391, 392, 393, 394,
+    395, 396, 399, 400, 401, 402, 403, 404, 405, 407, 408, 409, 410, 411, 413, 414, 415,
+    416, 417, 418, 420, 421, 423, 424, 427, 428, 429, 430, 431, 435, 436, 437, 438, 439,
+    441, 442, 442, 443, 443, 444, 445, 448, 449, 450, 451, 454, 455, 456, 457, 461, 462,
+    463, 464, 466, 467, 468, 469, 470, 471, 472, 478, 479]
+
+
+neon_runs = xleap_runs + sase_runs
+
+
+xenon_runs = [
+    498, 499, 500, 501, 502, 503, 504, 505, 507, 508, 509,
+    510, 511, 512, 513, 514, 515, 516, 517, 518, 519, 520]
+
+
+epix_runs = neon_runs + xenon_runs
+
+
+dark_runs = [
+    63, 179, 202, 208, 210, 237, 244, 251, 259, 266, 274, 286, 289, 295, 298, 313, 333,
+    334, 362, 363, 364, 365, 374, 381, 390, 398, 406, 412, 422, 425, 433, 434, 441, 447,
+    452, 473, 506]
+
+
+spectrometer_runs = [
+    77, 78, 79, 80, 81,
+    204, 207, 224, 236, 243, 245, 252, 260, 267, 275, 283, 284, 294,
+    339, 347, 349, 397, 419, 432, 446]
+
+
+spectrometer_calib_runs = [205, 206, 340, 342, 343, 344]
+
+
+run_dict = {
+    'spectrometer_xleap_calib': [205, 206],
+    'spectrometer_xleap': [204, 207, 224, 236, 243, 245, 252, 260, 267, 275, 283, 284, 294],
+    'spectrometer_sase_calib': [340, 342, 343, 344],
+    'spectrometer_sase': [339, 347, 349, 397, 419, 432, 446]}
+
+
+
 # energies from eLog data table in electron volts (eV)
 energy_elog_ev = np.array([
     874.65, 876.17, 875.22, 876.75, 874.55, 875.11, 875.33, 875.03, 804.51, 804.81,
@@ -232,22 +289,29 @@ def is_epix_run(run):
         return [run_type(item) in epix_run_types for item in run]
 
 
-def epix_runs():
-    '''
-    Returns all runs with epix100 detector data.
-
-    Anatoli Ulmer, 2022
-    '''
-    return [item in epix_run_types for item in run_type_array]
-
-
 def dark_runs():
     '''
     Returns all epix100 detector dark runs.
 
     Anatoli Ulmer, 2022
     '''
-    return [item == "dark" for item in run_type_array]
+    run_list = []
+    for idx, run_type in enumerate(run_type_array):
+        if run_type == 'dark':
+            run_list.append(idx+1)
+    return run_list
+
+
+def is_dark_run(run):
+    '''
+    Returns a bool value for a given run number or a bool array for a run array.
+
+    Anatoli Ulmer, 2022
+    '''
+    if np.ndim(run) == 0:
+        return run_type(run) == "dark"
+    else:
+        return [run_type(item) == "dark" for item in run]
 
 
 def spec_runs():
@@ -256,5 +320,27 @@ def spec_runs():
 
     Anatoli Ulmer, 2022
     '''
-    return [item == "spectrometer" for item in run_type_array]
+    run_list = []
+    for idx, run_type in enumerate(run_type_array):
+        if run_type == 'spectrometer':
+            run_list.append(idx+1)
+    return run_list
+
+
+def is_spec_run(run):
+    '''
+    Returns a bool value for a given run number or a bool array for a run array.
+
+    Anatoli Ulmer, 2022
+    '''
+    if np.ndim(run) == 0:
+        return run_type(run) == "spectrometer"
+    else:
+        return [run_type(item) == "spectrometer" for item in run]
+
+
+def is_xenon_run(run):
+    if np.ndim(run) == 0:
+        run = [run]
+    return [r in xenon_runs() for r in run]
 
