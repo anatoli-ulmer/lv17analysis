@@ -3,44 +3,46 @@ import numpy as np
 import psana as ps
 from lv17analysis import epix, lv17data, tof
 
+###################################################################################################
 
 exp_name = 'tmolv1720'
 run_list = [296]
-detector_list = ['epix100', 'hsd', 'tmo_opal3',  'gmd', 'xgmd', 'ebeam', 'pcav', 
-                 'xtcav', 'timing', 'evr_ch0_delay', 'source_valve_temp', 'epicsinfo']
+detector_list = ['epix100', 'hsd', 'tmo_opal3', 'gmd', 'xgmd', 'ebeam', 'pcav', 'xtcav',
+                 'timing', 'evr_ch0_delay', 'source_valve_temp', 'epicsinfo',
+                 'photon_energy_welch']
 
-data_list = ['epix', 'tof', 'spectrometer', 'gmd', 'xgmd', 'photon_energy', 'pcav',
-             'xtcav',  'source_on', 'source_delay', 'source_temp', 'epicsinfo']
+data_list = ['epix', 'tof_trace', 'spectrometer', 'gmd', 'xgmd', 'ebeam', 'pcav', 'xtcav',
+             'source_on', 'source_delay', 'source_temp', 'epicsinfo', 'photon_energy']
 
 # get data set name from detector name
-detector_dict = {'epix100' : 'epix',
-                 'hsd' : 'tof',
-                 'tmo_opal3' : 'spectrometer',
-                 'gmd' : 'gmd',
-                 'xgmd' : 'xgmd',
-                 'ebeam' : 'photon_energy',
-                 'pcav' : 'pcav',
-                 'xtcav' : 'xtcav',
+detector_dict = {'epix100': 'epix',
+                 'hsd': 'tof_trace',
+                 'tmo_opal3': 'spectrometer',
+                 'gmd': 'gmd',
+                 'xgmd': 'xgmd',
+                 'ebeam': 'ebeam',
+                 'photon_energy_welch': 'photon_energy',
+                 'pcav': 'pcav',
+                 'xtcav': 'xtcav',
                  'timing': 'source_on',
-                 'evr_ch0_delay' : 'source_delay',
-                 'source_valve_temp' : 'source_temp',
-                 'epicsinfo' : 'epicsinfo'
-                }
+                 'evr_ch0_delay': 'source_delay',
+                 'source_valve_temp': 'source_temp',
+                 'epicsinfo': 'epicsinfo'}
 
 # get detector name from data set name
-data_dict = {'epix' : 'epix100',
-             'tof' : 'hsd',
-             'spectrometer' : 'tmo_opal3',
-             'gmd' : 'gmd',
-             'xgmd' : 'xgmd',
-             'photon_energy' : 'ebeam',
-             'pcav' : 'pcav',
-             'xtcav' : 'xtcav',
-             'source_on' : 'timing',
-             'source_delay' : 'evr_ch0_delay',
-             'source_temp' : 'source_valve_temp',
-             'epicsinfo' : 'epicsinfo'
-            }
+data_dict = {'epix': 'epix100',
+             'tof_trace': 'hsd',
+             'spectrometer': 'tmo_opal3',
+             'gmd': 'gmd',
+             'xgmd': 'xgmd',
+             'ebeam': 'ebeam',
+             'photon_energy': 'photon_energy_welch',
+             'pcav': 'pcav',
+             'xtcav': 'xtcav',
+             'source_on': 'timing',
+             'source_delay': 'evr_ch0_delay',
+             'source_temp': 'source_valve_temp',
+             'epicsinfo': 'epicsinfo'}
 
 
 '''
@@ -100,25 +102,41 @@ tmo_opal3.raw.raw(evt)
 '''
 
 
-relevant_detectors = {
-    ('hsd', 'raw'): ['waveforms'],
+all_detectors = {
+    ('hsd', 'raw'): ['padded', 'peak_times', 'peaks', 'waveforms'],
+    ('epicsinfo', 'epicsinfo'): [],
     ('pcav', 'raw'): ['charge1', 'charge2', 'fitTime1', 'fitTime2'],
     ('xgmd', 'raw'): ['avgIntensity', 'electron1BkgNoiseAvg', 'electron2BkgNoiseAvg',
                       'energy', 'rmsElectronSum', 'xpos', 'ypos'],
-    ('gmd', 'raw'): ['avgIntensity', 'electron1BkgNoiseAvg', 'electron2BkgNoiseAvg',
-                     'energy', 'rmsElectronSum', 'xpos', 'ypos'],
+    ('gmd', 'raw'): ['avgIntensity', 'electron1BkgNoiseAvg', 'electron2BkgNoiseAvg', 'energy',
+                     'rmsElectronSum', 'xpos', 'ypos'],
     ('ebeam', 'raw'): ['damageMask', 'ebeamCharge', 'ebeamDumpCharge', 'ebeamEnergyBC1',
                        'ebeamEnergyBC2', 'ebeamL3Energy', 'ebeamLTU250', 'ebeamLTU450',
                        'ebeamLTUAngY', 'ebeamLTUPosX', 'ebeamLTUPosY', 'ebeamLUTAngX',
-                       'ebeamPhotonEnergy', 'ebeamPkCurrBC1', 'ebeamPkCurrBC2',
-                       'ebeamUndAngX', 'ebeamUndAngY', 'ebeamUndPosX', 'ebeamUndPosY',
-                       'ebeamXTCAVAmpl', 'ebeamXTCAVPhase'],
+                       'ebeamPhotonEnergy', 'ebeamPkCurrBC1', 'ebeamPkCurrBC2', 'ebeamUndAngX',
+                       'ebeamUndAngY', 'ebeamUndPosX', 'ebeamUndPosY', 'ebeamXTCAVAmpl',
+                       'ebeamXTCAVPhase'],
     ('timing', 'raw'): ['eventcodes'],
     ('xtcav', 'raw'): ['value'],
     ('epix100', 'raw'): ['calib', 'image', 'raw'],
     ('tmo_opal3', 'raw'): ['calib', 'image', 'raw'],
     'evr_ch0_delay': [],
-    'source_valve_temp': []
+    'source_valve_temp': [],
+    'photon_energy_welch': []
+}
+
+
+relevant_detectors = {
+    ('hsd', 'raw'): ['waveforms'],
+    ('xgmd', 'raw'): ['energy'],
+    ('gmd', 'raw'): ['energy'],
+    ('timing', 'raw'): ['eventcodes'],
+    ('xtcav', 'raw'): ['value'],
+    ('epix100', 'raw'): ['image'],
+    ('tmo_opal3', 'raw'): ['image'],
+    'evr_ch0_delay': [],
+    'source_valve_temp': [],
+    'photon_energy_welch': []
 }
 
 
@@ -141,71 +159,96 @@ def get_detector_keys(run):
     return detector_keys
 
 
-def get_detector_active(ds_run):
+def get_active_detectors(ds_run):
     det_info = get_detector_info(ds_run.runnum)
     det_active = []
     for key, val in det_info.items():
         if len(val) > 0:
             det_active.append(key[0])
     return det_active
-    
-
-def get_epix(ds_run, evt):
-    return epix.get_img(ds_run, evt, img_selector='image', cm=True, masked=True)
 
 
-def get_tof(ds_run, evt):
-    return tof.get_trace(ds_run.Detector('hsd'), evt)
+def detectors2datasets(detectors_list):
+    return [detector_dict[det_str] for det_str in detectors_list]
 
 
-def get_spectrometer(ds_run, evt):
-    return ds_run.Detector('tmo_opal3').raw.image(evt)
+def get(data_str, evt):
+    return eval("get_{}(evt)".format(data_str))
 
 
-def get_gmd(ds_run, evt):
-    return ds_run.Detector('gmd').raw.energy(evt)
+def get_epix(evt):
+    return epix.get_img(evt, img_selector='image', cm=True, masked=False)
 
 
-def get_xgmd(ds_run, evt):
-    return ds_run.Detector('xgmd').raw.energy(evt)
+def get_tof(evt):
+    return tof.get_trace(evt)
 
 
-def get_photon_energy(ds_run, evt):
-    return ds_run.Detector('ebeam').raw.ebeamPhotonEnergy(evt)
+def get_tof_trace(evt):
+    times, trace = tof.get_trace(evt)
+    return trace
 
 
-def get_evt_codes(ds_run, evt):
-    return ds_run.Detector('timing').raw.eventcodes(evt)
+def get_tof_times(evt):
+    times, trace = tof.get_trace(evt)
+    return times
 
 
-def get_evt_code_71(ds_run, evt):
-    return ds_run.Detector('timing').raw.eventcodes(evt)[71]
+def get_spectrometer(evt):
+    return evt.run().Detector('tmo_opal3').raw.image(evt)
 
 
-def get_pcav(ds_run, evt):
-    charge1 = ds_run.Detector('pcav').raw.charge1(evt)
-    charge2 = ds_run.Detector('pcav').raw.charge2(evt)
-    fitTime1 = ds_run.Detector('pcav').raw.fitTime1(evt)
-    fitTime2 = ds_run.Detector('pcav').raw.fitTime2(evt)
-    return charge1, charge2, fitTime1, fitTime2
+def get_gmd(evt):
+    return evt.run().Detector('gmd').raw.energy(evt)
 
 
-def get_xtcav(ds_run, evt):
-    return ds_run.Detector('xtcav').raw.value(evt)
+def get_xgmd(evt):
+    return evt.run().Detector('xgmd').raw.energy(evt)
 
 
-def get_source_on(ds_run, evt):
-    return get_evt_code_71(ds_run, evt)
+def get_photon_energy(evt):
+    return evt.run().Detector('photon_energy_welch')(evt)
 
 
-def get_source_delay(ds_run, evt):
-    return ds_run.Detector('evr_ch0_delay')(evt)
+def get_evt_codes(evt):
+    return evt.run().Detector('timing').raw.eventcodes(evt)
 
 
-def get_source_temp(ds_run, evt):
-    return ds_run.Detector('source_valve_temp')(evt)
+def get_evt_code_71(evt):
+    return evt.run().Detector('timing').raw.eventcodes(evt)[71]
 
 
-def get_epicsinfo(ds_run, evt):
-    return ds_run.Detector('epicsinfo')(evt)
+def get_pcav(evt):
+    charge1 = evt.run().Detector('pcav').raw.charge1(evt)
+    charge2 = evt.run().Detector('pcav').raw.charge2(evt)
+    fitTime1 = evt.run().Detector('pcav').raw.fitTime1(evt)
+    fitTime2 = evt.run().Detector('pcav').raw.fitTime2(evt)
+    return np.array([charge1, charge2, fitTime1, fitTime2])
+
+
+def get_xtcav(evt):
+    return evt.run().Detector('xtcav').raw.value(evt)
+
+
+def get_ebeam(evt):
+    data = []
+    for det in all_detectors[('ebeam', 'raw')]:
+        data.append(eval("evt.run().Detector('ebeam').raw.{}(evt)".format(det)))
+    return data
+
+
+def get_source_on(evt):
+    return get_evt_code_71(evt)
+
+
+def get_source_delay(evt):
+    return evt.run().Detector('evr_ch0_delay')(evt)
+
+
+def get_source_temp(evt):
+    return evt.run().Detector('source_valve_temp')(evt)
+
+
+def get_epicsinfo(evt):
+    return evt.run().Detector('epicsinfo')(evt)
 
