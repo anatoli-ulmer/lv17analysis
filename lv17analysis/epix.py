@@ -3,41 +3,84 @@ import psana as ps
 import pickle as pkl
 import os
 from lv17analysis.helpers import *
+from lv17analysis import lv17data
 
 
-def get_img(det, evt, img_selector='image'):
+# def get_img(det, evt, img_selector='image'):
+#     '''
+#     Parameters:
+#         det : ds_run.Detector('epix100') object
+#             psana Detector object
+#         evt : element of ds_run.events()
+#             psana evt object
+#         img_selector : 'raw', 'calib' or 'image' (default)
+#             Choose which image to ask from the psana detector calibration function.
+#             Choosing 'image' is recommended.
+#     Returns:
+#         img : 2D array
+#             epix100 detector image
+
+#     Anatoli Ulmer, 2022
+#     '''
+#     if img_selector == 'image':
+#         img_epix = det.raw.image(evt)
+#     elif img_selector == 'calib':
+#         img_raw = det.raw.calib(evt)
+#         img_epix = img_raw[0].transpose()
+#     elif img_selector == 'raw':
+#         img_raw = det.raw.raw(evt)
+#         img_epix = np.asarray(img_raw[0], dtype=np.float64).transpose()
+#     else:
+#         raise Exception("img_selector has to be one of the following options:\
+#                         'raw', 'calib' or 'image' (default)")
+#     return img_epix
+
+
+def get_img(evt, img_selector='image', cm=True, masked=False, mask=None):
     '''
     Parameters:
-        det : ds_run.Detector('epix100') object
-            psana Detector object
         evt : element of ds_run.events()
             psana evt object
-        img_selector : 'raw', 'calib' or 'image' (default)
+        img_selector : 'raw', 'calib' or 'image', optional
             Choose which image to ask from the psana detector calibration function.
-            Choosing 'image' is recommended.
+            Choosing 'image' (default) is recommended.
+        cm : bool, optional
+            Apply common mode correction? Default = True
+        masked : bool, optional
+            Apply masking? Default = True
     Returns:
         img : 2D array
-            epix100 detector image
+            corrected and masked epix100 detector image
 
     Anatoli Ulmer, 2022
     '''
+    det = evt.run().Detector('epix100')
+
     if img_selector == 'image':
-        img_epix = det.raw.image(evt)
-    elif img_selector == 'calib': 
+        img = det.raw.image(evt)
+    elif img_selector == 'calib':
         img_raw = det.raw.calib(evt)
-        img_epix = img_raw[0].transpose()
+        img = img_raw[0].transpose()
     elif img_selector == 'raw':
         img_raw = det.raw.raw(evt)
-        img_epix = np.asarray(img_raw[0], dtype=np.float64).transpose()
+        img = np.asarray(img_raw[0], dtype=np.float64).transpose()
     else:
         raise Exception("img_selector has to be one of the following options:\
                         'raw', 'calib' or 'image' (default)")
-    return img_epix
+
+    if img is not None:
+        if cm:
+            cm_thresh = 0.5 * lv17data.photon_energy_kev(evt.run().runnum)
+            img = cm_correction(img, cm_thresh=cm_thresh)
+        if masked:
+            img = masked_img(img, mask=mask)
+
+    return img
 
 
 def nan_cross(img):
-    img[:, 352:357] = np.nan
-    img[384:389, :] = np.nan
+    img[:, 352:356] = np.nan
+    img[384:388, :] = np.nan
     return img
 
 
@@ -56,18 +99,25 @@ def get_mask(img):
     mask[5*96+5-1, :] = False
     mask[6*96+5-1, :] = False
     mask[7*96+5-1, :] = False
+    # mask[:, 351:357] = False
+    # mask[383:389, :] = False
+    # mask[196:442, 610:] = False
+    # mask[1*96-1: 1*96, :] = False
+    # mask[2*96-1: 2*96, :] = False
+    # mask[3*96-1: 3*96, :] = False
+    # mask[5*96+5-1: 5*96+5, :] = False
+    # mask[6*96+5-1: 6*96+5, :] = False
+    # mask[7*96+5-1: 7*96+5, :] = False
 
     return mask
 
 
 def masked_img(img, mask=None):
-    if mask is None:
+    if mask is None or len(mask) == 0:
         mask = get_mask(img)
     # ret = np.array(img, dtype=np.float64)
     # ret[~mask] = np.nan
-    ret = np.ma.array(img, mask=~mask, dtype=np.float64)
-
-    return ret
+    return np.ma.array(img, mask=~mask, dtype=np.float64)
 
 
 def offset_correction(img, offs_thresh=0.5, x_chunks=2, y_chunks=8):
@@ -199,6 +249,6 @@ def quantum_efficiency(photon_energy_ev, filename="None300um_smoothed.csv"):
     '''
     ev, qe = read_quantum_efficiency_csv(filename=filename)
     quantum_efficiency = np.interp(photon_energy_ev, ev, qe)
-    
+
     return quantum_efficiency
 
