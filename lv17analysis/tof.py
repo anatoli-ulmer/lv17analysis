@@ -9,11 +9,9 @@ import math
 from pylab import polyfit, plot, show
 
 
-def get_trace(hsd, evt, tof_channel=None, ranges_bg=[0, 10000], n_digitizers_per_channel=4):
+def get_trace(evt, tof_channel=None, ranges_bg=[0, 10000], n_digitizers_per_channel=4):
     '''
     Parameters:
-        hsd : ds_run.Detector('hsd') object
-            psana Detector object
         evt : element of ds_run.events()
             psana evt object
         tof_channel : int, optional
@@ -31,6 +29,7 @@ def get_trace(hsd, evt, tof_channel=None, ranges_bg=[0, 10000], n_digitizers_per
 
     Anatoli Ulmer, 2022
     '''
+    hsd = evt.run().Detector('hsd')
     hsd_data = hsd.raw.waveforms(evt)
 
     if tof_channel is None:
@@ -40,12 +39,16 @@ def get_trace(hsd, evt, tof_channel=None, ranges_bg=[0, 10000], n_digitizers_per
             tof_channel = list(hsd_data.keys())[0]  # the digitzer channel the tof is on
         else:
             tof_channel = 3  # the default is channel 3
-    
+
     tof_data = hsd_data[tof_channel]
     tof_times = tof_data['times']  # the times
     tof_trace = np.asarray(tof_data[0], dtype=float)  # the actual tof data
     tof_trace = bg_correction(tof_trace, ranges_bg=ranges_bg, nchannels=n_digitizers_per_channel)
-    return tof_trace, tof_times
+
+    # convert to mV
+    _hsd_fs_range_vpp = hsd.raw._seg_configs()[tof_channel].config.expert.fs_range_vpp
+    tof_trace *= _hsd_to_mv(_hsd_fs_range_vpp)
+    return tof_times, tof_trace
 
 
 def bg_correction(trace, ranges_bg=[0, 10000], nchannels=4):
