@@ -2,15 +2,14 @@ import numpy as np
 from psana import DataSource
 
 
-def run_mean(exp='tmolv1720', run=75, nmax=2000):
+def run_mean(run=75, exp='tmolv1720', nmax=2000):
 
-    ds = DataSource(exp=exp, run=run)
+    ds = DataSource(exp=exp, run=run, detectors=['tmo_opal3', 'gmd', 'xgmd'])
     ds_run = next(ds.runs())
 
     tmo_opal3 = ds_run.Detector('tmo_opal3')
     gmd = ds_run.Detector('gmd')
     xgmd = ds_run.Detector('xgmd')
-    ebeam = ds_run.Detector('ebeam')
 
     opal_sum = np.zeros((1024, 1024), dtype=float)
     ncollected = 0
@@ -20,10 +19,9 @@ def run_mean(exp='tmolv1720', run=75, nmax=2000):
         if ncollected > nmax:
             break
 
-        opal_img = tmo_opal3.raw.image(evt)
+        opal_img = tmo_opal3.raw.raw(evt)
         gmd_energy = gmd.raw.energy(evt)
         xgmd_energy = xgmd.raw.energy(evt)
-        L3_val = ebeam.raw.ebeamL3Energy(evt)
 
         if gmd_energy is None:
             continue
@@ -37,20 +35,26 @@ def run_mean(exp='tmolv1720', run=75, nmax=2000):
     return opal_sum / ncollected
 
 
-def run_mean_spec(exp='tmolv1720', run=75, nmax=2000):
+def run_mean_spec(run=75, exp='tmolv1720', nmax=2000):
     opal_run_mean = run_mean(exp=exp, run=run, nmax=nmax)
     return spec_from_img(opal_run_mean)
 
 
-def roi_from_img(opal_img, pad_pix=3, bg_pix_offset=100):
-    bright_pix_pos = np.argmax(np.sum(opal_img[:, :], axis=1))
-    return opal_img[bright_pix_pos-pad_pix+1: bright_pix_pos+pad_pix, :]
+def get_center_px(opal_img):
+    return np.argmax(np.nansum(opal_img[:, :], axis=1))
 
 
-def spec_from_img(opal_img, pad_pix=3, bg_pix_offset=100):
-    bright_pix_pos = np.argmax(np.sum(opal_img[:, :], axis=1))
-    dark_pix_pos = bright_pix_pos - bg_pix_offset
-    spec_bg = np.mean(opal_img[dark_pix_pos-pad_pix+1: dark_pix_pos+pad_pix, :], axis=0)
-    img_roi = roi_from_img(opal_img, pad_pix=pad_pix, bg_pix_offset=bg_pix_offset)
-    spec_roi = np.mean(img_roi, axis=0)
+def roi_from_img(opal_img, center_px=None, pad_px=3):
+    if center_px is None:
+        center_px = get_center_px(opal_img)
+    pad = [np.max([0, center_px-pad_px]), np.min([1023, center_px+pad_px+1])]
+    return opal_img[pad[0]:pad[1], :]
+
+
+def spec_from_img(opal_img, center_px=None, pad_px=3, bg_offset=100):
+    if center_px is None:
+        center_px = get_center_px(opal_img)
+    bg_px_pos = center_px - bg_offset * (-1)**(center_px > 512)
+    spec_roi = np.nanmean(roi_from_img(opal_img, center_px=center_px, pad_px=pad_px), axis=0)
+    spec_bg = np.nanmean(opal_img[bg_px_pos-pad_px: bg_px_pos+pad_px+1, :], axis=0)
     return spec_roi - spec_bg
