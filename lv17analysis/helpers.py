@@ -80,3 +80,8 @@ def bindata(data, bins=50):
     ret = np.asarray([onepoint(b) for b in range(bins)]).T
     return ret
 
+
+def movmean(dlist, k=5):
+    kk = np.arange(k)
+    return np.convolve(dlist, np.ones_like(kk),'valid') / k
+

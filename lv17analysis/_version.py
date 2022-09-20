@@ -44,7 +44,7 @@ def get_config():
     cfg.style = "pep440"
     cfg.tag_prefix = ""
     cfg.parentdir_prefix = "None"
-    cfg.versionfile_source = "tmolv1720/_version.py"
+    cfg.versionfile_source = "lv17analysis/_version.py"
     cfg.verbose = False
     return cfg
 
