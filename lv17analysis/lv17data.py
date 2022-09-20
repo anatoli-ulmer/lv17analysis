@@ -48,14 +48,18 @@ spectrometer_runs = [
     339, 347, 349, 397, 419, 432, 446]
 
 
-spectrometer_calib_runs = [205, 206, 340, 342, 343, 344]
+spectrometer_calib_runs = [205, 206, 340, 341, 342, 343, 344]
 
 
-run_dict = {
-    'spectrometer_xleap_calib': [205, 206],
-    'spectrometer_xleap': [204, 207, 224, 236, 243, 245, 252, 260, 267, 275, 283, 284, 294],
-    'spectrometer_sase_calib': [340, 342, 343, 344],
-    'spectrometer_sase': [339, 347, 349, 397, 419, 432, 446]}
+spectrometer_run_dict = {
+    'xleap_calib_ni_in': [205, 206],
+    'xleap_calib_ni_out': [204, 207],
+    'xleap_calib_nominal_energy': [869.6, 890.47],
+    'xleap': [204, 207, 224, 236, 243, 245, 252, 260, 267, 275, 283, 284, 294],
+    'sase_calib_ni_in': [340, 344],
+    'sase_calib_ni_out': [339, 347],
+    'sase_calib_nominal_energy': [869.53, 884.84],
+    'sase': [339, 347, 349, 397, 419, 432, 446]}
 
 
 
