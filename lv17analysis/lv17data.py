@@ -62,7 +62,6 @@ spectrometer_run_dict = {
     'sase': [339, 347, 349, 397, 419, 432, 446]}
 
 
-
 # energies from eLog data table in electron volts (eV)
 energy_elog_ev = np.array([
     874.65, 876.17, 875.22, 876.75, 874.55, 875.11, 875.33, 875.03, 804.51, 804.81,

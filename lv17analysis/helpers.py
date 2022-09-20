@@ -83,5 +83,5 @@ def bindata(data, bins=50):
 
 def movmean(dlist, k=5):
     kk = np.arange(k)
-    return np.convolve(dlist, np.ones_like(kk),'valid') / k
+    return np.convolve(dlist, np.ones_like(kk), 'valid') / k
 

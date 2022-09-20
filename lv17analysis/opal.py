@@ -58,3 +58,4 @@ def spec_from_img(opal_img, center_px=None, pad_px=3, bg_offset=100):
     spec_roi = np.nanmean(roi_from_img(opal_img, center_px=center_px, pad_px=pad_px), axis=0)
     spec_bg = np.nanmean(opal_img[bg_px_pos-pad_px: bg_px_pos+pad_px+1, :], axis=0)
     return spec_roi - spec_bg
+
