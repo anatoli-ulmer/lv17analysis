@@ -32,7 +32,7 @@ def populate_data_dict(evt, datasets_list, crucial_datasets=['']):
                 return None
             else:
                 data = -99999
-        data_dict[data_str] = data
+        data_dict[data_str] = np.asarray(data)
     return data_dict
 
 
@@ -126,13 +126,19 @@ def produce_h5_files(run_list, data_scope='epix', overwrite=False, i_max=None):
                 continue
 
             if 'epix' in data_dict.keys():
-                lit_thresh = 0.5 * lv17data.photon_energy_kev(ds_run.runnum)
-                data_dict['epix_sum'] = np.nansum(data_dict['epix'])
-                data_dict['epix_lit'] = epix.count_lit(data_dict['epix'], lit_thresh=lit_thresh)
+                if np.shape(data_dict['epix']) == ():
+                    continue
+                else:
+                    lit_thresh = 0.5 * lv17data.photon_energy_kev(ds_run.runnum)
+                    data_dict['epix_sum'] = np.nansum(data_dict['epix'])
+                    data_dict['epix_lit'] = epix.count_lit(data_dict['epix'], lit_thresh=lit_thresh)
 
             if 'tof_trace' in data_dict.keys():
-                data_dict['tof_sum'] = np.nansum(data_dict['tof_trace'])
-                data_dict['tof_abs_sum'] = np.nansum(np.abs(data_dict['tof_trace']))
+                if np.shape(data_dict['tof_trace']) == ():
+                    continue
+                else:
+                    data_dict['tof_sum'] = np.nansum(data_dict['tof_trace'])
+                    data_dict['tof_abs_sum'] = np.nansum(np.abs(data_dict['tof_trace']))
 
             # filter and write file
             for excl_data in exclude_datasets:
