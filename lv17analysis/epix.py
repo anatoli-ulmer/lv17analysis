@@ -85,7 +85,10 @@ def nan_cross(img):
 
 
 def count_lit(img, lit_thresh=0.5):
-    return np.nansum(img.flatten() > lit_thresh)
+    if np.shape(img) == ():
+        return -99999
+    # lit_pixel = np.asarray(img, dtype=np.float64).flatten() >= lit_thresh
+    return np.nansum(img.flatten() >= lit_thresh)
 
 
 def get_mask(img):
