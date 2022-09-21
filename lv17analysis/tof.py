@@ -32,6 +32,9 @@ def get_trace(evt, tof_channel=None, ranges_bg=[0, 10000], n_digitizers_per_chan
     hsd = evt.run().Detector('hsd')
     hsd_data = hsd.raw.waveforms(evt)
 
+    if hsd_data is None:
+        return None, None
+
     if tof_channel is None:
         # If no channel is specified and only one hsd channel is active, it will be chosen.
         # If multiple channels are active, the default channel 3 will be chosen.
@@ -41,7 +44,11 @@ def get_trace(evt, tof_channel=None, ranges_bg=[0, 10000], n_digitizers_per_chan
             tof_channel = 3  # the default is channel 3
 
     tof_data = hsd_data[tof_channel]
-    tof_times = tof_data['times']  # the times
+
+    if tof_data is None:
+        return None, None
+
+    tof_times = tof_data['times']
     tof_trace = np.asarray(tof_data[0], dtype=float)  # the actual tof data
     tof_trace = bg_correction(tof_trace, ranges_bg=ranges_bg, nchannels=n_digitizers_per_channel)
 
