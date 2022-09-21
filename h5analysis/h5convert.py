@@ -109,6 +109,7 @@ def produce_h5_files(run_list, data_scope='epix', overwrite=False, i_max=None):
         smd = ds.smalldata(filename=fname, batch_size=5)
 
         i_success = 0
+        tof_times = None
 
         # iterate through events
         for i_evt, evt in enumerate(ds_run.events()):
@@ -126,17 +127,20 @@ def produce_h5_files(run_list, data_scope='epix', overwrite=False, i_max=None):
                 continue
 
             if 'epix' in data_dict.keys():
-                if np.shape(data_dict['epix']) == ():
+                if data_dict['epix'] is None or np.shape(data_dict['epix']) == ():
                     continue
                 else:
                     lit_thresh = 0.5 * lv17data.photon_energy_kev(ds_run.runnum)
                     data_dict['epix_sum'] = np.nansum(data_dict['epix'])
-                    data_dict['epix_lit'] = epix.count_lit(data_dict['epix'], lit_thresh=lit_thresh)
+                    data_dict['epix_lit'] = epix.count_lit(data_dict['epix'],
+                                                           lit_thresh=lit_thresh)
 
             if 'tof_trace' in data_dict.keys():
-                if np.shape(data_dict['tof_trace']) == ():
+                if data_dict['tof_trace'] is None or np.shape(data_dict['tof_trace']) == ():
                     continue
                 else:
+                    if tof_times is None:
+                        tof_times = detectors.get_tof_times(evt)
                     data_dict['tof_sum'] = np.nansum(data_dict['tof_trace'])
                     data_dict['tof_abs_sum'] = np.nansum(np.abs(data_dict['tof_trace']))
 
@@ -150,10 +154,11 @@ def produce_h5_files(run_list, data_scope='epix', overwrite=False, i_max=None):
 
         smd.done()  # close file
 
-        # add tof_times to h5 file if tof_trace was also written
+        # add run and tof_times to h5 file if tof_trace was also written
         with h5py.File(fname, 'r+') as f:
+            f['run'] = run
             if 'tof_trace' in f.keys():
-                f['tof_times'] = detectors.get_tof_times(evt)
+                f['tof_times'] = tof_times
 
         t_diff = datetime.timedelta(seconds=int(time.time() - t_start))
         print("Time for run {:04d}: {}, processed {:d} good entries.".format(
