@@ -207,7 +207,7 @@ def get_xgmd(evt):
 
 
 def get_photon_energy(evt):
-    return evt.run().Detector('photon_energy_welch')(evt)
+    return np.single(evt.run().Detector('photon_energy_welch')(evt))
 
 
 def get_evt_codes(evt):
@@ -242,11 +242,11 @@ def get_source_on(evt):
 
 
 def get_source_delay(evt):
-    return evt.run().Detector('evr_ch0_delay')(evt)
+    return np.single(evt.run().Detector('evr_ch0_delay')(evt))
 
 
 def get_source_temp(evt):
-    return evt.run().Detector('source_valve_temp')(evt)
+    return np.single(evt.run().Detector('source_valve_temp')(evt))
 
 
 def get_epicsinfo(evt):

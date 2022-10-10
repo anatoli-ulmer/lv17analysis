@@ -2,16 +2,19 @@ import numpy as np
 from psana import DataSource
 
 
-def run_mean(run=75, exp='tmolv1720', nmax=2000):
+def run_mean(run=75, exp='tmolv1720', nmax=2000,
+             gmd_min=0.02, gmd_max=2.5,
+             xgmd_min=0.02, xgmd_max=1.5):
 
-    ds = DataSource(exp=exp, run=run, detectors=['tmo_opal3', 'gmd', 'xgmd'])
+    ds = DataSource(exp=exp, run=run)
     ds_run = next(ds.runs())
 
     tmo_opal3 = ds_run.Detector('tmo_opal3')
     gmd = ds_run.Detector('gmd')
     xgmd = ds_run.Detector('xgmd')
 
-    opal_sum = np.zeros((1024, 1024), dtype=float)
+    opal_mean = np.zeros((1024, 1024), dtype=float)
+    hv_mean = 0
     ncollected = 0
 
     for i, evt in enumerate(ds_run.events()):
@@ -22,22 +25,39 @@ def run_mean(run=75, exp='tmolv1720', nmax=2000):
         opal_img = tmo_opal3.raw.raw(evt)
         gmd_energy = gmd.raw.energy(evt)
         xgmd_energy = xgmd.raw.energy(evt)
+        hv = ds_run.Detector('photon_energy_welch')(evt)
+
+        if hv is None:
+            continue
 
         if gmd_energy is None:
+            continue
+
+        if gmd_energy < gmd_min or gmd_energy > gmd_max:
+            continue
+
+        if xgmd_energy is None:
+            continue
+
+        if xgmd_energy < xgmd_min or xgmd_energy > xgmd_max:
             continue
 
         if opal_img is None:
             continue
 
-        opal_sum += np.asarray(opal_img, dtype=float) / gmd_energy
+        opal_mean += np.asarray(opal_img, dtype=float) / xgmd_energy
+        hv_mean += hv
         ncollected += 1
 
-    return opal_sum / ncollected
+    opal_mean /= ncollected
+    hv_mean /= ncollected
+
+    return opal_mean, hv_mean
 
 
 def run_mean_spec(run=75, exp='tmolv1720', nmax=2000):
-    opal_run_mean = run_mean(exp=exp, run=run, nmax=nmax)
-    return spec_from_img(opal_run_mean)
+    opal_mean, hv_mean = run_mean(exp=exp, run=run, nmax=nmax)
+    return spec_from_img(opal_mean), hv_mean
 
 
 def get_center_px(opal_img):
