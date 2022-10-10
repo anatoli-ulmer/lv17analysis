@@ -6,34 +6,13 @@ from lv17analysis.helpers import *
 from lv17analysis import lv17data
 
 
-# def get_img(det, evt, img_selector='image'):
-#     '''
-#     Parameters:
-#         det : ds_run.Detector('epix100') object
-#             psana Detector object
-#         evt : element of ds_run.events()
-#             psana evt object
-#         img_selector : 'raw', 'calib' or 'image' (default)
-#             Choose which image to ask from the psana detector calibration function.
-#             Choosing 'image' is recommended.
-#     Returns:
-#         img : 2D array
-#             epix100 detector image
+parameter = {
+    'px': 50e-6,
+    'distance': 0.395,
+    'size': np.asarray([352, 384])}
 
-#     Anatoli Ulmer, 2022
-#     '''
-#     if img_selector == 'image':
-#         img_epix = det.raw.image(evt)
-#     elif img_selector == 'calib':
-#         img_raw = det.raw.calib(evt)
-#         img_epix = img_raw[0].transpose()
-#     elif img_selector == 'raw':
-#         img_raw = det.raw.raw(evt)
-#         img_epix = np.asarray(img_raw[0], dtype=np.float64).transpose()
-#     else:
-#         raise Exception("img_selector has to be one of the following options:\
-#                         'raw', 'calib' or 'image' (default)")
-#     return img_epix
+# center position for run 219 from slack channel
+center = np.asarray([403, 677])
 
 
 def get_img(evt, img_selector='image', cm=True, masked=False, mask=None):
@@ -110,6 +89,19 @@ def get_mask(img):
     # mask[5*96+5-1: 5*96+5, :] = False
     # mask[6*96+5-1: 6*96+5, :] = False
     # mask[7*96+5-1: 7*96+5, :] = False
+    mask[593:597, 662:665] = False
+    mask[543:547, 356:653] = False
+
+    mask[545:550, 0:352] = False
+    # mask[541:547, 644:649] = False
+    mask[541:544, 642:650, ] = False
+#     mask[539:541, 643:649] = False
+#     mask[543, 641:651] = False
+#     mask[546, 644:653] = False
+#     mask[617, 560:562] = False
+#     mask[681:691, 629:640] = False
+#      # mask[534, 662] = False
+#     mask[540:543, 427:431] = False
 
     return mask
 
@@ -213,11 +205,12 @@ def calc_sum_lit(exp='tmolv1720', run=[170], lit_thresh=0.5,
     return delay, img_sum, img_lit
 
 
-def read_quantum_efficiency_csv(filename="None300um_smoothed.csv"):
+def read_quantum_efficiency_csv(filename="Nonesmoothed.csv"):
     '''
     Choose between the following filter files:
+        'None_smoothed.csv' (default)
         'None300um.csv'
-        'None300um_smoothed.csv' (default)
+        'None300um_smoothed.csv'
         'Al25um.csv'
         'Al25um_smoothed.csv'
         'Be25um.csv'
@@ -240,12 +233,12 @@ def read_quantum_efficiency_csv(filename="None300um_smoothed.csv"):
 
     data = np.loadtxt(abs_filepath, delimiter=',')
     ev = data[:, 0]
-    qe = data[:, 1] / 5e-5
+    qe = data[:, 1]
 
     return ev, qe
 
 
-def quantum_efficiency(photon_energy_ev, filename="None300um_smoothed.csv"):
+def quantum_efficiency(photon_energy_ev, filename="None_smoothed.csv"):
     '''
     Anatoli Ulmer, 2022
     '''
