@@ -1,5 +1,7 @@
 import numpy as np
 import pickle as pkl
+from IPython.display import display, clear_output
+import datetime
 
 
 def fftshift(sig):
@@ -84,4 +86,17 @@ def bindata(data, bins=50):
 def movmean(dlist, k=5):
     kk = np.arange(k)
     return np.convolve(dlist, np.ones_like(kk), 'valid') / k
+
+
+def clear():
+    clear_output(wait=True)
+    return
+
+
+def today():
+    return str(datetime.date.today())
+
+
+def now():
+    return str(datetime.datetime.now())
 
