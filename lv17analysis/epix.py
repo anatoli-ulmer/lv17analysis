@@ -1,9 +1,12 @@
 import numpy as np
 import psana as ps
+import h5py
 import pickle as pkl
 import os
 from lv17analysis.helpers import *
 from lv17analysis import lv17data
+from h5analysis import h5data
+
 
 
 parameter = {
@@ -15,7 +18,7 @@ parameter = {
 center = np.asarray([403, 677])
 
 
-def get_img(evt, img_selector='image', cm=True, masked=False, mask=None):
+def get_img(evt, img_selector='image', cm=True, masked=False, mask=None, cmpars=None):
     '''
     Parameters:
         evt : element of ds_run.events()
@@ -36,10 +39,12 @@ def get_img(evt, img_selector='image', cm=True, masked=False, mask=None):
     det = evt.run().Detector('epix100')
 
     if img_selector == 'image':
-        img = det.raw.image(evt)
+        img = det.raw.image(evt, cmpars=cmpars)
+        cm = cm if cmpars is None else False
     elif img_selector == 'calib':
-        img_raw = det.raw.calib(evt)
+        img_raw = det.raw.calib(evt, cmpars=cmpars)
         img = img_raw[0].transpose()
+        cm = cm if cmpars is None else False
     elif img_selector == 'raw':
         img_raw = det.raw.raw(evt)
         img = np.asarray(img_raw[0], dtype=np.float64).transpose()
@@ -69,40 +74,52 @@ def count_lit(img, lit_thresh=0.5):
     return np.nansum(img.flatten() >= lit_thresh)
 
 
-def get_mask(img):
-    mask = np.ones(img.shape, dtype=bool)
-    mask[:, 352:356] = False
-    mask[384:388, :] = False
-    mask[196:442, 610:] = False
-    mask[1*96-1, :] = False
-    mask[2*96-1, :] = False
-    mask[3*96-1, :] = False
-    mask[5*96+5-1, :] = False
-    mask[6*96+5-1, :] = False
-    mask[7*96+5-1, :] = False
+def get_mask(img=None):
+    if img is None:
+        n = [773, 709]
+    else:
+        n = ((np.asarray(np.shape(img)))).astype(int)
+    hn = ((np.asarray(n)-5)/2).astype(int)
+    mask = np.ones(n, dtype=bool)
+
+    # center cross
+    mask[hn[0]-1:-hn[0]+1, :] = False
+    mask[:, hn[1]-1:-hn[1]+1] = False
     # mask[:, 351:357] = False
     # mask[383:389, :] = False
+
+    # outermost pixels
+    mask[[0,1,-2,-1], :] = False
+    mask[:, [0,1,-2,-1]] = False
+
+    # one line per bank which doesn't work properly
+    hlines = np.asarray([1, 2, 3, 4, -1, -2, -3, -4])*96-1
+    mask[hlines, :hn[1]] = False
+    mask[hlines+1, :hn[1]] = False
+    mask[hlines+2, :hn[1]] = False
+    mask[hlines-1, -hn[1]-1:] = False
+    mask[hlines, -hn[1]-1:] = False
+    mask[hlines+1, -hn[1]-1:] = False
+    vlines = np.asarray([1, -1])*352 - 1
+    mask[:, vlines] = False
+
+    # beamstop
+    mask[194:442, 610:]= False
     # mask[196:442, 610:] = False
-    # mask[1*96-1: 1*96, :] = False
-    # mask[2*96-1: 2*96, :] = False
-    # mask[3*96-1: 3*96, :] = False
-    # mask[5*96+5-1: 5*96+5, :] = False
-    # mask[6*96+5-1: 6*96+5, :] = False
-    # mask[7*96+5-1: 7*96+5, :] = False
+
+    # Bad detector areas
     mask[593:597, 662:665] = False
-    mask[543:547, 356:653] = False
-
+    mask[543:548, 356:653] = False
     mask[545:550, 0:352] = False
-    # mask[541:547, 644:649] = False
     mask[541:544, 642:650, ] = False
-#     mask[539:541, 643:649] = False
-#     mask[543, 641:651] = False
-#     mask[546, 644:653] = False
-#     mask[617, 560:562] = False
-#     mask[681:691, 629:640] = False
-#      # mask[534, 662] = False
-#     mask[540:543, 427:431] = False
-
+    mask[541:549, 644:649] = False
+    mask[539:544, 643:649] = False
+    mask[543, 641:651] = False
+    mask[546, 644:653] = False
+    mask[617, 560:562] = False
+    mask[681:691, 629:640] = False
+    mask[427:431, 540:543] = False
+    mask[630:643, 680:691] = False
     return mask
 
 
@@ -120,11 +137,12 @@ def offset_correction(img, offs_thresh=0.5, x_chunks=2, y_chunks=8):
     ny_chunk = (ny-5)/y_chunks
 
     for ix in range(x_chunks):
+        offx = 0 if ix < x_chunks/2 else 5
         for iy in range(y_chunks):
-            img_tile = img[int(iy*ny_chunk):int((iy+1)*ny_chunk-1),
-                           int(ix*nx_chunk):int((ix+1)*nx_chunk-1)]
+            offy = 0 if iy < y_chunks/2 else 5
+            img_tile = img[int(iy*ny_chunk+offx):int((iy+1)*ny_chunk+offy),
+                           int(ix*nx_chunk+offx):int((ix+1)*nx_chunk+offy)]
             img_tile = img_tile - np.nanmedian(img_tile[img_tile < offs_thresh])
-
     return img
 
 
@@ -246,4 +264,12 @@ def quantum_efficiency(photon_energy_ev, filename="None_smoothed.csv"):
     quantum_efficiency = np.interp(photon_energy_ev, ev, qe)
 
     return quantum_efficiency
+
+
+def load_bg(run, bgpath=h5data.h5paths['bg_mean_fullpath']):
+    with h5py.File(bgpath, 'r') as bgf:
+        bgruns = np.asarray(bgf['run'])
+        bgi = np.where(bgruns == run)[0][0]
+        bg = np.asarray(bgf['bg_mean'][bgi])
+    return bg
 
