@@ -8,7 +8,6 @@ from lv17analysis import lv17data
 from h5analysis import h5data
 
 
-
 parameter = {
     'px': 50e-6,
     'distance': 0.395,
@@ -79,32 +78,32 @@ def get_mask(img=None):
         n = [773, 709]
     else:
         n = ((np.asarray(np.shape(img)))).astype(int)
-    hn = ((np.asarray(n)-5)/2).astype(int)
+    hn = ((np.asarray(n) - 5) / 2).astype(int)
     mask = np.ones(n, dtype=bool)
 
     # center cross
-    mask[hn[0]-1:-hn[0]+1, :] = False
-    mask[:, hn[1]-1:-hn[1]+1] = False
+    mask[hn[0] - 1:-hn[0] + 1, :] = False
+    mask[:, hn[1] - 1:-hn[1] + 1] = False
     # mask[:, 351:357] = False
     # mask[383:389, :] = False
 
     # outermost pixels
-    mask[[0,1,-2,-1], :] = False
-    mask[:, [0,1,-2,-1]] = False
+    mask[[0, 1, -2, -1], :] = False
+    mask[:, [0, 1, -2, -1]] = False
 
     # one line per bank which doesn't work properly
-    hlines = np.asarray([1, 2, 3, 4, -1, -2, -3, -4])*96-1
+    hlines = np.asarray([1, 2, 3, 4, -1, -2, -3, -4]) * 96 - 1
     mask[hlines, :hn[1]] = False
-    mask[hlines+1, :hn[1]] = False
-    mask[hlines+2, :hn[1]] = False
-    mask[hlines-1, -hn[1]-1:] = False
-    mask[hlines, -hn[1]-1:] = False
-    mask[hlines+1, -hn[1]-1:] = False
-    vlines = np.asarray([1, -1])*352 - 1
+    mask[hlines + 1, :hn[1]] = False
+    mask[hlines + 2, :hn[1]] = False
+    mask[hlines - 1, -hn[1] - 1:] = False
+    mask[hlines, -hn[1] - 1:] = False
+    mask[hlines + 1, -hn[1] - 1:] = False
+    vlines = np.asarray([1, -1]) * 352 - 1
     mask[:, vlines] = False
 
     # beamstop
-    mask[194:442, 610:]= False
+    mask[194:442, 610:] = False
     # mask[196:442, 610:] = False
 
     # Bad detector areas
@@ -133,22 +132,22 @@ def masked_img(img, mask=None):
 
 def offset_correction(img, offs_thresh=0.5, x_chunks=2, y_chunks=8):
     ny, nx = img.shape
-    nx_chunk = (nx-5)/x_chunks
-    ny_chunk = (ny-5)/y_chunks
+    nx_chunk = (nx - 5) / x_chunks
+    ny_chunk = (ny - 5) / y_chunks
 
     for ix in range(x_chunks):
-        offx = 0 if ix < x_chunks/2 else 5
+        offx = 0 if ix < x_chunks / 2 else 5
         for iy in range(y_chunks):
-            offy = 0 if iy < y_chunks/2 else 5
-            img_tile = img[int(iy*ny_chunk+offx):int((iy+1)*ny_chunk+offy),
-                           int(ix*nx_chunk+offx):int((ix+1)*nx_chunk+offy)]
+            offy = 0 if iy < y_chunks / 2 else 5
+            img_tile = img[int(iy * ny_chunk + offx):int((iy + 1) * ny_chunk + offy),
+                           int(ix * nx_chunk + offx):int((ix + 1) * nx_chunk + offy)]
             img_tile = img_tile - np.nanmedian(img_tile[img_tile < offs_thresh])
     return img
 
 
 def cm_correction(img, axis=None, cm_thresh=0.5):
     nrows, ncols = img.shape
-    ny, nx = np.int16(nrows/2), np.int16(ncols/2)
+    ny, nx = np.int16(nrows / 2), np.int16(ncols / 2)
 
     img_cm = np.copy(img)
     img_cm[img_cm > cm_thresh] = np.nan
@@ -157,11 +156,11 @@ def cm_correction(img, axis=None, cm_thresh=0.5):
         img = cm_correction(img, axis=0, cm_thresh=cm_thresh)
         img = cm_correction(img, axis=1, cm_thresh=cm_thresh)
     elif axis == 0:
-        img[:, :(nx-1)] -= np.nanmedian(img_cm[:, :(nx-1)], axis=1).reshape(nrows, 1)
-        img[:, -(nx-1):] -= np.nanmedian(img_cm[:, -(nx-1):], axis=1).reshape(nrows, 1)
+        img[:, :(nx - 1)] -= np.nanmedian(img_cm[:, :(nx - 1)], axis=1).reshape(nrows, 1)
+        img[:, -(nx - 1):] -= np.nanmedian(img_cm[:, -(nx - 1):], axis=1).reshape(nrows, 1)
     elif axis == 1:
-        img[:(ny-1), :] -= np.nanmedian(img_cm[:(ny-1), :], axis=0).reshape(1, ncols)
-        img[-(ny-1):, :] -= np.nanmedian(img_cm[-(ny-1):, :], axis=0).reshape(1, ncols)
+        img[:(ny - 1), :] -= np.nanmedian(img_cm[:(ny - 1), :], axis=0).reshape(1, ncols)
+        img[-(ny - 1):, :] -= np.nanmedian(img_cm[-(ny - 1):, :], axis=0).reshape(1, ncols)
 
     return img
 
@@ -208,7 +207,7 @@ def calc_sum_lit(exp='tmolv1720', run=[170], lit_thresh=0.5,
 
             epix_img = nan_cross(epix100_data)
             epix_zero = np.nanmedian(epix_img)
-            epix_img = epix_img-epix_zero
+            epix_img = epix_img - epix_zero
 
             epix_sum = np.nansum(epix_img.flatten())
             lit_pix = count_lit(epix_img, lit_thresh=lit_thresh)

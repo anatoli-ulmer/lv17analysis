@@ -46,13 +46,12 @@ dark_runs = [
     452, 473, 506]
 
 
-spectrometer_runs = [
-    77, 78, 79, 80, 81,
-    204, 207, 224, 236, 243, 245, 252, 260, 267, 275, 283, 284, 294,
-    339, 347, 349, 397, 419, 432, 446]
+spectrometer_data_runs = [77, 78, 79, 80, 81, 224, 236, 243, 245, 252, 260, 267,
+                          275, 283, 284, 294, 349, 397, 419, 432, 446]
 
+spectrometer_calib_runs = [204, 205, 206, 207, 339, 340, 344, 347]
 
-spectrometer_calib_runs = [205, 206, 340, 341, 342, 343, 344]
+spectrometer_runs = spectrometer_data_runs + spectrometer_calib_runs
 
 
 spectrometer_run_dict = {
