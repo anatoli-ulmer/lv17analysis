@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 
 def run_hist(exp='tmolv1720', run=[13, 14, 15], oneplot=True, figsize=(20, 5), alpha=0.5,
              xlim=None, detector='gmd', normalized=True, histtype='step'):
-
     ''' Creates histograms for run list for either detector='gmd' or detector='xgmd' '''
 
     ds = ps.DataSource(exp=exp, run=run, detectors=[detector])
@@ -14,7 +13,7 @@ def run_hist(exp='tmolv1720', run=[13, 14, 15], oneplot=True, figsize=(20, 5), a
         plt.figure(figsize=figsize)
 
     for ds_run in ds.runs():
-        if type(ds_run) == ps.psexp.null_ds.NullRun:
+        if isinstance(ds_run, ps.psexp.null_ds.NullRun):
             sleep(0.1)
             print('Nullrunning! Continuing...')
             continue

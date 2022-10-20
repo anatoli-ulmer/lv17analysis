@@ -60,7 +60,7 @@ def get_trace(evt, tof_channel=None, ranges_bg=[0, 10000], n_digitizers_per_chan
 
 def bg_correction(trace, ranges_bg=[0, 10000], nchannels=4):
     for i in np.arange(nchannels):
-        bg = np.mean(trace[i+ranges_bg[0]:ranges_bg[1]:nchannels])
+        bg = np.mean(trace[i + ranges_bg[0]:ranges_bg[1]:nchannels])
         trace[i::nchannels] = trace[i::nchannels] - bg
     return trace
 
@@ -74,7 +74,7 @@ def write_run_mean(exp='tmolv1720', run=[6],
     ds = ps.DataSource(exp=exp, run=run, detectors=['hsd', 'gmd', 'xgmd'])
 
     for ds_run in ds.runs():
-        if type(ds_run) == ps.psexp.null_ds.NullRun:
+        if isinstance(ds_run, ps.psexp.null_ds.NullRun):
             sleep(0.1)
             print('Nullrunning! Continuing...')
             continue
@@ -143,7 +143,6 @@ def read_run_mean(exp='tmolv1720', run=6, tof_channel=3, ranges_bg=[0, 10000], n
                   gmd_min=0.0, gmd_max=np.inf, gmd_norm=False,
                   xgmd_min=0.0, xgmd_max=np.inf, xgmd_norm=False,
                   tof_dir='/cds/data/psdm/tmo/tmolv1720/results/shared/tof_run_mean'):
-
     ''' reads and returns tof trace for a single run. trace has to be
     written by write_run_mean function prior to readout. If file does
     not exist, it will be generated with write_run_mean. '''
@@ -194,7 +193,7 @@ def fast_plot(exp='tmolv1720', run=[6], t_unit='µs', t_zero=0.0, t_min=None, t_
                                              xgmd_max=xgmd_max, xgmd_norm=xgmd_norm)
 
         if time_axis is True:
-            plot_x = tof_times*_t_scale - t_zero
+            plot_x = tof_times * _t_scale - t_zero
         else:
             plot_x = np.arange(len(tof_trace))
 
@@ -238,7 +237,7 @@ def get_time_indices(tof_times, times):
 
 
 def _hsd_to_mv(_hsd_fs_range_vpp):
-    return (400 + _hsd_fs_range_vpp*(1040-480)/(65535-8192)) / 4096
+    return (400 + _hsd_fs_range_vpp * (1040 - 480) / (65535 - 8192)) / 4096
 
 
 def _get_peaks_filename(run, peaks_dir):
@@ -312,7 +311,7 @@ def calc_peak_ratios(run=[34, 35, 36, 37, 38, 39, 40, 41, 42],
                                                 peaks[charge_states[0]][1]]))
             peak_sum2 = np.sum(np.abs(tof_trace[peaks[charge_states[1]][0]:
                                                 peaks[charge_states[1]][1]]))
-            peak_sum_ratio[i, j] = peak_sum1/peak_sum2
+            peak_sum_ratio[i, j] = peak_sum1 / peak_sum2
 
     return peak_sum_ratio
 
@@ -342,41 +341,41 @@ def draw_charged_states(argon_states=[7.027, 6.844, 6.734, 6.66, 6.605, 6.562,
                         water=True, nitrogen=True, carbon=True, m_q=[]):
     tau = list(argon_states)
     mq = []
-    for i in range(2, (2+len(tau))):
-        mq.append(math.sqrt(39.948/i))
+    for i in range(2, (2 + len(tau))):
+        mq.append(math.sqrt(39.948 / i))
     x = np.asarray(mq)
     y = np.asarray(tau)
 
     m, b = polyfit(x, y, 1)
 
-    plot(x, y, 'yo', x, (m*x)+b, '--k')
+    plot(x, y, 'yo', x, (m * x) + b, '--k')
     show()
-    print('Slope= '+str(m)+', t0= '+str(b))
+    print('Slope= ' + str(m) + ', t0= ' + str(b))
     fast_plot(exp=exp, run=run, t_zero=t_zero, t_min=t_min, t_max=t_max, figsize=figsize,
               gmd_min=gmd_min, gmd_max=gmd_max, gmd_norm=gmd_norm,
               time_axis=time_axis, t_units=t_units)
 
     for i in range(1, 18):
-        plt.axvline(x=(m*math.sqrt(39.948/i)+b), ymin=-40, ymax=15, color='red',
+        plt.axvline(x=(m * math.sqrt(39.948 / i) + b), ymin=-40, ymax=15, color='red',
                     linestyle='--')
-    plt.axvline(x=(m*math.sqrt(39.948)+b), ymin=-40, ymax=15, color='red',
+    plt.axvline(x=(m * math.sqrt(39.948) + b), ymin=-40, ymax=15, color='red',
                 linestyle='--', label='Ar')
     plt.axvline(x=b, ymin=-40, ymax=15, color='green', linestyle='--', label='t0')
     if water is True:
-        plt.axvline(x=(m*math.sqrt(1/1)+b), ymin=-40, ymax=15, color='lawngreen',
+        plt.axvline(x=(m * math.sqrt(1 / 1) + b), ymin=-40, ymax=15, color='lawngreen',
                     linestyle='--', label='H+')
-        plt.axvline(x=(m*math.sqrt(18/1)+b), ymin=-40, ymax=15,
+        plt.axvline(x=(m * math.sqrt(18 / 1) + b), ymin=-40, ymax=15,
                     color='lightgreen',
                     linestyle='--', label='H2O+')
-        plt.axvline(x=(m*math.sqrt(17/1)+b), ymin=-40, ymax=15,
+        plt.axvline(x=(m * math.sqrt(17 / 1) + b), ymin=-40, ymax=15,
                     color='aquamarine', linestyle='--', label='OH+')
     if nitrogen is True:
-        plt.axvline(x=(m*math.sqrt(14/1)+b), ymin=-40, ymax=15, color='orange',
+        plt.axvline(x=(m * math.sqrt(14 / 1) + b), ymin=-40, ymax=15, color='orange',
                     linestyle='--', label='N+')
     if carbon is True:
-        plt.axvline(x=(m*math.sqrt(12.011)+b), ymin=-40, ymax=15, color='grey',
+        plt.axvline(x=(m * math.sqrt(12.011) + b), ymin=-40, ymax=15, color='grey',
                     linestyle='--', label='C+')
     for i in m_q:
-        plt.axvline(x=(m*math.sqrt(i)+b), ymin=-40, ymax=15, color='yellow',
+        plt.axvline(x=(m * math.sqrt(i) + b), ymin=-40, ymax=15, color='yellow',
                     linestyle='--', label='additional')
     plt.legend()

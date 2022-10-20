@@ -106,8 +106,6 @@ def produce_h5_files(run_list, data_scope='epix', overwrite=False, i_max=None):
         #         detector_list.remove(excl_det)
         # datasets_list = detectors.detectors2datasets(detector_list)
 
-
-
         # check for completeness of crucial datasets
         if any([cr_data not in datasets_list for cr_data in crucial_datasets]):
             continue
@@ -198,7 +196,7 @@ if __name__ == "__main__":
 
     if nargs > 1:
         if nargs > 2:
-            run_list = list(range(int(sys.argv[1]), int(sys.argv[2])+1))
+            run_list = list(range(int(sys.argv[1]), int(sys.argv[2]) + 1))
         else:
             run_list = [int(sys.argv[1])]
     else:
