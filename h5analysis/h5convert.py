@@ -7,7 +7,7 @@ import h5py
 import os
 import time
 import datetime
-from lv17analysis import detectors, lv17data, epix
+from lv17analysis import detectors, lv17data, epix, helpers
 import glob
 import sys
 
@@ -15,12 +15,14 @@ import sys
 exclude_data_dict = {'full': [''],
                      'epix': ['spectrometer'],
                      'tof': ['epix', 'spectrometer'],
-                     'smd': ['epix', 'spectrometer', 'tof_trace']}
+                     'smd': ['epix', 'spectrometer', 'tof_trace'],
+                     'opal': ['epix', 'tof_trace']}
 
 exclude_det_dict = {'full': [''],
                     'epix': ['xtcav', 'pcav', 'ebeam', 'tmo_opal3', 'epicsinfo'],
                     'tof': ['xtcav', 'pcav', 'ebeam', 'tmo_opal3', 'epicsinfo'],
-                    'smd': ['xtcav', 'pcav', 'ebeam', 'tmo_opal3', 'epicsinfo']}
+                    'smd': ['xtcav', 'pcav', 'ebeam', 'tmo_opal3', 'epicsinfo'],
+                    'opal': ['epix', 'hsd', 'xtcav', 'pcav', 'ebeam', 'epicsinfo']}
 
 
 def populate_data_dict(evt, datasets_list, crucial_datasets=['']):
@@ -74,6 +76,14 @@ def produce_h5_files(run_list, data_scope='epix', overwrite=False, i_max=None):
 
     for i_run, run in enumerate(run_list):
 
+        # only process if run contains epix
+        if data_scope == "epix" and run not in lv17data.epix_runs:
+            continue
+
+        if data_scope == "opal" and run not in lv17data.spectrometer_runs:
+            print(run)
+            continue
+
         t_start = time.time()
 
         print('run. ' + str(run) + ' started (' + str(i_run + 1) + '/' + str(len(run_list)) + ')')
@@ -82,7 +92,7 @@ def produce_h5_files(run_list, data_scope='epix', overwrite=False, i_max=None):
         if not xtc_exists(run):
             continue
 
-        fname = get_filename(run, data_scope, overwrite=overwrite)
+        fname = get_filename(run=run, data_scope=data_scope, overwrite=overwrite)
         if fname is None:
             continue
 
@@ -96,9 +106,7 @@ def produce_h5_files(run_list, data_scope='epix', overwrite=False, i_max=None):
         #         detector_list.remove(excl_det)
         # datasets_list = detectors.detectors2datasets(detector_list)
 
-        # only process if run contains epix
-        if run not in lv17data.epix_runs:
-            continue
+
 
         # check for completeness of crucial datasets
         if any([cr_data not in datasets_list for cr_data in crucial_datasets]):
@@ -152,6 +160,8 @@ def produce_h5_files(run_list, data_scope='epix', overwrite=False, i_max=None):
 
             i_success += 1
 
+            helpers.clc()
+
         smd.done()  # close file
 
         # add run and tof_times to h5 file if tof_trace was also written
@@ -168,7 +178,8 @@ def produce_h5_files(run_list, data_scope='epix', overwrite=False, i_max=None):
 ###################################################################################################
 if __name__ == "__main__":
     '''
-    Run script with 'mpirun -n 1 python lv17analysis/h5convert.py'
+    Run script with:
+        'python ./lv17analysis/h5analysis/h5convert.py <start_run> <end_run> <data_scope> <i_max>'
 
     Anatoli Ulmer, Linos Hecht, 2022
     '''
@@ -176,13 +187,14 @@ if __name__ == "__main__":
 
     print(sys.argv)
 
-    # python ~/lv17/lv17analysis/lv17analysis/h5convert.py
+    # python ~/lv17/lv17analysis/h5analysis/h5convert.py
     # start script: python lv17analysis/h5convert.py <start_run> <end_run> <data_scope>
-    # mpirun -n 6 python lv17analysis/h5convert.py run_start run_end
     nargs = len(sys.argv)
 
-    # choose data scope between 'full', 'tof' and 'smd'
+    # choose data scope between 'epix', 'opal', 'full', 'tof' and 'smd'
     data_scope = sys.argv[3] if nargs > 3 else 'epix'
+    overwrite = sys.argv[4] == "True" if nargs > 4 else False
+    i_max = int(sys.argv[5]) if nargs > 5 else None
 
     if nargs > 1:
         if nargs > 2:
@@ -192,4 +204,6 @@ if __name__ == "__main__":
     else:
         run_list = lv17data.epix_runs
 
-    produce_h5_files(run_list)
+    produce_h5_files(run_list=run_list, data_scope=data_scope, overwrite=overwrite,
+                     i_max=i_max)
+
