@@ -8,11 +8,12 @@ import numpy
 import os
 
 import versioneer
+import autopep8
 
 setup(name='lv17analysis',
       version=versioneer.get_version(),
       cmdclass=versioneer.get_cmdclass(),
-      include_package_data = True,
+      include_package_data=True,
       author='Anatoli Ulmer',
       author_email='anatoli.ulmer@gmail.com',
       description='Python package for data analysis of tmolv1720 experiment (2022).',

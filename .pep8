@@ -1,0 +1,9 @@
+[pep8]
+in-place = True
+recursive = True
+aggressive = 4
+max_line_length = 99
+count = True
+statistics = True
+show-source = True
+exclude globs = .ipynb_checkpoints
